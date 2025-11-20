@@ -1,9 +1,10 @@
 /* ---------------------------------- */
-/* ГЛОБАЛЬНА ОПТИМІЗАЦІЯ ДЛЯ МОБІЛЬНОГО */
+/* ГЛОБАЛЬНА ОПТИМІЗАЦІЯ ТА ФОН */
 /* ---------------------------------- */
 html, body {
     height: 100%; 
-    overflow: hidden; 
+    /* Тепер overflow: auto, якщо контент високий, скрол дозволений */
+    overflow-y: auto; 
     box-sizing: border-box;
 }
 
@@ -22,7 +23,7 @@ body {
 }
 
 /* ---------------------------------- */
-/* ФОНОВИЙ ЕЛЕМЕНТ (РАНДОМІЗАЦІЯ) */
+/* ФОНОВИЙ ЕЛЕМЕНТ */
 /* ---------------------------------- */
 #transition-photo {
     position: fixed;
@@ -36,32 +37,29 @@ body {
     filter: blur(5px) grayscale(50%); 
     background-color: rgba(0, 0, 0, 0.5); 
     background-blend-mode: overlay; 
+    /* Можна залишити, якщо ви плануєте міняти фон через JS або при завантаженні */
     transition: background-image 0.5s ease-in-out; 
+    background-image: url('photo1.jpg'); /* Встановлюємо фіксований фон */
 }
 
 /* ---------------------------------- */
-/* КОНТЕЙНЕР СВАЙПУ */
+/* КОНТЕЙНЕР КАРТКИ (БЕЗ СВАЙПУ) */
 /* ---------------------------------- */
 .swipe-container {
     width: 100%;
     max-width: 650px;
-    margin: 20px auto; 
-    overflow: hidden;
+    margin: 40px auto; 
     position: relative;
     z-index: 1;
 }
 
-.slide-wrapper {
-    display: flex; 
-    transition: transform 0.4s ease-out; 
-    width: 200%; 
-}
+/* Видаляємо .slide-wrapper та .dots-indicator, оскільки вони більше не потрібні */
 
 /* ---------------------------------- */
-/* ОСНОВНА КАРТКА (SLIDE) */
+/* ОСНОВНА КАРТКА */
 /* ---------------------------------- */
 .main-wrapper.slide {
-    flex: 0 0 50%;
+    /* flex: 0 0 50%; та width: 200% більше не потрібні */
     
     background: #1e1e1e;
     border-radius: 25px;
@@ -72,8 +70,10 @@ body {
     
     padding: 40px 30px; 
     margin: 0; 
-    max-height: 95vh; 
-    overflow-y: auto; 
+    
+    /* Знімаємо жорсткі обмеження висоти та overflow-y: auto, щоб body контролював скрол */
+    max-height: none; 
+    overflow-y: visible; 
 }
 
 /* ---------------------------------- */
@@ -92,31 +92,6 @@ body {
     z-index: 5;
     
     box-shadow: 0 0 0 5px #1e1e1e; 
-}
-
-/* ---------------------------------- */
-/* ІНДИКАТОРИ СТОРІНОК (КРАПКИ) */
-/* ---------------------------------- */
-.dots-indicator {
-    position: absolute;
-    top: -10px; 
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 8px;
-    z-index: 10;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    background-color: #555;
-    border-radius: 50%;
-    transition: background-color 0.3s;
-}
-
-.dot.active {
-    background-color: #ff9900;
 }
 
 /* ---------------------------------- */
@@ -260,9 +235,5 @@ body {
     
     .btn {
         width: 100%;
-    }
-    
-    .main-wrapper.slide {
-        max-height: none; 
     }
 }
