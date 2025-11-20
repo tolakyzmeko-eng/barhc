@@ -1,174 +1,128 @@
-// script.js
-// Повна заміна: динамічний wrapper width, коректний translateX, dots, свайп/drag, клавіші, ресайз
+// script.js — повна заміна: коректний translateX, динамічний wrapper width, свайп, доти, ресайз
 document.addEventListener('DOMContentLoaded', () => {
-  const wrapper = document.getElementById('slideWrapper');                 // .slide-wrapper
-  if (!wrapper) return;
-  const slides = Array.from(wrapper.querySelectorAll('.slide'));          // .main-wrapper.slide
-  const dots = Array.from(document.querySelectorAll('.dot'));             // кнопки-доти
+  const slideWrapper = document.getElementById('slideWrapper') || document.querySelector('.slide-wrapper');
+  if (!slideWrapper) return;
+  const slides = Array.from(slideWrapper.querySelectorAll('.slide, .main-wrapper.slide'));
+  const dots = Array.from(document.querySelectorAll('.dot'));
   const bg = document.getElementById('transition-photo');
-  const yearA = document.getElementById('yearA');
+  const yearA = document.getElementById('yearA') || document.getElementById('year');
   const yearB = document.getElementById('yearB');
 
   if (yearA) yearA.textContent = new Date().getFullYear();
   if (yearB) yearB.textContent = new Date().getFullYear();
 
-  // Зразок фонів (замініть шляхи на свої)
+  // optional backgrounds (replace with your images)
   const backgrounds = ['url("bg1.jpg")','url("bg2.jpg")','url("bg3.jpg")'];
   if (bg && backgrounds.length) bg.style.backgroundImage = backgrounds[Math.floor(Math.random()*backgrounds.length)];
 
-  // Ініціалізація стилів wrapper/slides під кількість слайдів
+  // Init: set wrapper width as slides.length * 100% and per-slide flex basis
   function initLayout() {
-    // встановлюємо ширину wrapper у відсотках за кількістю слайдів
-    wrapper.style.width = `${slides.length * 100}%`;
-    // кожен слайд займає 100% видимої області за замовчуванням
+    slideWrapper.style.width = `${slides.length * 100}%`;
     slides.forEach(s => {
       s.style.flex = '0 0 100%';
       s.style.minWidth = '100%';
     });
-    // при великих екранах ми показуємо по 2 слайда одночасно — стилі CSS задають flex-basis:50%,
-    // але для підрахунків ми враховуємо visibleCount (див. computeVisibleCount)
   }
-
   initLayout();
 
-  // Певні змінні стану
-  let index = 0;
-  let isDragging = false;
-  let startX = 0;
-  let currentX = 0;
-  let dx = 0;
-  let transitionLocked = false;
-  let resizeTimeout = null;
-
-  // Визначаємо, скільки слайдів видно одночасно (для зсуву)
-  function computeVisibleCount() {
-    return window.matchMedia('(min-width: 720px)').matches ? 2 : 1;
+  // How many slides visible at once (1 on mobile, 2 on wider screens)
+  function visibleCount() {
+    return window.matchMedia('(min-width:720px)').matches ? 2 : 1;
   }
 
-  // Обчислюємо ширину однієї видимої області (viewport для слайду)
-  function visibleWidth() {
-    // ширина контейнера, який показує слайди (батько wrapper)
-    const container = wrapper.parentElement;
+  function viewportWidth() {
+    const container = slideWrapper.parentElement;
     return container ? container.clientWidth : window.innerWidth;
   }
 
-  // Обмеження індексу з урахуванням visibleCount
-  function clampIndex(i) {
-    const visible = computeVisibleCount();
-    const maxIndex = Math.max(0, slides.length - visible);
+  let index = 0;
+  function clamp(i) {
+    const maxIndex = Math.max(0, slides.length - visibleCount());
     return Math.min(Math.max(0, i), maxIndex);
   }
 
-  // Оновлення позиції (translateX) і стану дотів
-  function updatePosition(animate = true) {
-    if (transitionLocked) return;
-    const visible = computeVisibleCount();
-    const vw = visibleWidth();
-    const shiftPerIndex = vw / visible;
-    const clamped = clampIndex(index);
-    index = clamped;
-    const shift = Math.round(shiftPerIndex * index);
-    if (animate) wrapper.style.transition = '';
-    // щоб тримати плавну анімацію, трохи включаємо перехід
-    if (animate) {
-      // дозволяємо CSS transition розв’язуватися; якщо wrapper має inline transition, воно буде використовуватись
-      wrapper.style.transition = 'transform .38s cubic-bezier(.22,.9,.32,1)';
-    }
-    wrapper.style.transform = `translateX(-${shift}px)`;
-    dots.forEach((d, i) => d.classList.toggle('active', i === index));
+  function update(animate = true) {
+    index = clamp(index);
+    const visible = visibleCount();
+    const vw = viewportWidth();
+    // width per visible slot (if visible=2, each visible slot is vw/2)
+    const slot = vw / visible;
+    const shift = Math.round(slot * index);
+    if (!animate) slideWrapper.style.transition = 'none';
+    else slideWrapper.style.transition = 'transform .38s cubic-bezier(.22,.9,.32,1)';
+    slideWrapper.style.transform = `translateX(-${shift}px)`;
+    dots.forEach((d,i)=> d.classList.toggle('active', i === index));
   }
 
-  // Налаштування дотів: на випадок якщо їх кількість не співпадає з кількістю видимих станів,
-  // ми залишаємо їх як контролери start-index (dots[i] => index = i)
-  dots.forEach(d => {
+  // Dots click
+  dots.forEach((d, i) => {
     d.addEventListener('click', () => {
-      const requested = Number(d.dataset.index ?? Array.from(dots).indexOf(d)) || 0;
-      index = clampIndex(requested);
-      updatePosition(true);
+      index = clamp(i);
+      update(true);
     });
   });
 
-  // Touch / Mouse drag handlers
-  function onTouchStart(e) {
+  // Touch / mouse drag
+  let startX = 0, dx = 0, dragging = false;
+  function onStart(e) {
     if (e.touches && e.touches.length > 1) return;
-    isDragging = true;
-    startX = (e.touches ? e.touches[0].clientX : e.clientX);
-    currentX = startX;
+    dragging = true;
+    startX = e.touches ? e.touches[0].clientX : e.clientX;
     dx = 0;
-    wrapper.style.transition = 'none';
+    slideWrapper.style.transition = 'none';
   }
-
-  function onTouchMove(e) {
-    if (!isDragging) return;
-    const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+  function onMove(e) {
+    if (!dragging) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     dx = clientX - startX;
-    const visible = computeVisibleCount();
-    const vw = visibleWidth();
-    const baseShift = (vw / visible) * index;
-    wrapper.style.transform = `translateX(${-baseShift - dx}px)`;
+    const visible = visibleCount();
+    const vw = viewportWidth();
+    const base = (vw / visible) * index;
+    slideWrapper.style.transform = `translateX(${-base - dx}px)`;
   }
-
-  function onTouchEnd(e) {
-    if (!isDragging) return;
-    isDragging = false;
-    wrapper.style.transition = ''; // дозволяємо transition з CSS
-    const threshold = Math.max(40, visibleWidth() * 0.08); // мінімальний поріг свайпу
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    slideWrapper.style.transition = '';
+    const threshold = Math.max(40, viewportWidth() * 0.08);
     if (Math.abs(dx) > threshold) {
-      if (dx < 0 && index < slides.length - computeVisibleCount()) index++;
+      if (dx < 0 && index < slides.length - visibleCount()) index++;
       if (dx > 0 && index > 0) index--;
     }
     dx = 0;
-    updatePosition(true);
+    update(true);
   }
 
-  // Додаємо слушачі для touch + mouse (щоб працювало і на десктопі drag)
-  wrapper.addEventListener('touchstart', onTouchStart, {passive: true});
-  wrapper.addEventListener('touchmove', onTouchMove, {passive: true});
-  wrapper.addEventListener('touchend', onTouchEnd);
-  wrapper.addEventListener('mousedown', (e) => {
-    // тільки якщо ліва кнопка миші
+  slideWrapper.addEventListener('touchstart', onStart, {passive:true});
+  slideWrapper.addEventListener('touchmove', onMove, {passive:true});
+  slideWrapper.addEventListener('touchend', onEnd);
+  // mouse support for desktop drag
+  slideWrapper.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
-    onTouchStart(e);
-    // додаємо глобальні слухачі, поки триває drag
-    const onMove = (ev) => onTouchMove(ev);
-    const onUp = (ev) => {
-      onTouchEnd(ev);
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    onStart(e);
+    const onMoveWin = (ev) => onMove(ev);
+    const onUpWin = (ev) => { onEnd(ev); window.removeEventListener('mousemove', onMoveWin); window.removeEventListener('mouseup', onUpWin); };
+    window.addEventListener('mousemove', onMoveWin);
+    window.addEventListener('mouseup', onUpWin);
   });
 
-  // Keyboard navigation
+  // keyboard
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight') {
-      index = clampIndex(index + 1);
-      updatePosition(true);
-    } else if (e.key === 'ArrowLeft') {
-      index = clampIndex(index - 1);
-      updatePosition(true);
-    }
+    if (e.key === 'ArrowRight') { index = clamp(index + 1); update(true); }
+    if (e.key === 'ArrowLeft')  { index = clamp(index - 1); update(true); }
   });
 
-  // Ресайз: пересчитать layout і позицію (debounce)
-  function onResize() {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      // Якщо змінюється visibleCount — можливо треба підкоригувати index
-      index = clampIndex(index);
-      // переконаємось, що wrapper width відповідає кількості слайдів
+  // resize: recompute layout and keep same logical index
+  let rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => {
       initLayout();
-      updatePosition(false);
+      index = clamp(index);
+      update(false);
     }, 80);
-  }
-  window.addEventListener('resize', onResize);
+  });
 
-  // Ініціалізація позиції та захист від неправильних початкових розмірів
-  // Установимо невеликий таймаут, щоб DOM/CSS завершили рендер
-  setTimeout(() => {
-    initLayout();
-    index = clampIndex(index);
-    updatePosition(false);
-  }, 60);
+  // Final init
+  setTimeout(() => { initLayout(); index = clamp(index); update(false); }, 60);
 });
