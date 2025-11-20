@@ -3,8 +3,7 @@
 /* ---------------------------------- */
 html, body {
     height: 100%; 
-    /* Тепер overflow: auto, якщо контент високий, скрол дозволений */
-    overflow-y: auto; 
+    overflow: hidden; 
     box-sizing: border-box;
 }
 
@@ -13,6 +12,7 @@ body {
     margin: 0;
     padding: 0;
     color: #e0e0e0; 
+    /* ФІКСОВАНИЙ ТЕМНИЙ ФОН */
     background-color: #121212; 
     line-height: 1.7;
     min-height: 100vh;
@@ -23,43 +23,28 @@ body {
 }
 
 /* ---------------------------------- */
-/* ФОНОВИЙ ЕЛЕМЕНТ */
-/* ---------------------------------- */
-#transition-photo {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1; 
-    background-size: cover;
-    background-position: center;
-    filter: blur(5px) grayscale(50%); 
-    background-color: rgba(0, 0, 0, 0.5); 
-    background-blend-mode: overlay; 
-    /* Можна залишити, якщо ви плануєте міняти фон через JS або при завантаженні */
-    transition: background-image 0.5s ease-in-out; 
-    background-image: url('photo1.jpg'); /* Встановлюємо фіксований фон */
-}
-
-/* ---------------------------------- */
-/* КОНТЕЙНЕР КАРТКИ (БЕЗ СВАЙПУ) */
+/* КОНТЕЙНЕР СВАЙПУ */
 /* ---------------------------------- */
 .swipe-container {
     width: 100%;
     max-width: 650px;
-    margin: 40px auto; 
+    margin: 20px auto; 
+    overflow: hidden;
     position: relative;
     z-index: 1;
 }
 
-/* Видаляємо .slide-wrapper та .dots-indicator, оскільки вони більше не потрібні */
+.slide-wrapper {
+    display: flex; 
+    transition: transform 0.4s ease-out; 
+    width: 200%; 
+}
 
 /* ---------------------------------- */
-/* ОСНОВНА КАРТКА */
+/* ОСНОВНА КАРТКА (SLIDE) */
 /* ---------------------------------- */
 .main-wrapper.slide {
-    /* flex: 0 0 50%; та width: 200% більше не потрібні */
+    flex: 0 0 50%;
     
     background: #1e1e1e;
     border-radius: 25px;
@@ -70,10 +55,8 @@ body {
     
     padding: 40px 30px; 
     margin: 0; 
-    
-    /* Знімаємо жорсткі обмеження висоти та overflow-y: auto, щоб body контролював скрол */
-    max-height: none; 
-    overflow-y: visible; 
+    max-height: 95vh; 
+    overflow-y: auto; 
 }
 
 /* ---------------------------------- */
@@ -92,6 +75,31 @@ body {
     z-index: 5;
     
     box-shadow: 0 0 0 5px #1e1e1e; 
+}
+
+/* ---------------------------------- */
+/* ІНДИКАТОРИ СТОРІНОК (КРАПКИ) */
+/* ---------------------------------- */
+.dots-indicator {
+    position: absolute;
+    top: 5px; 
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    background-color: #555;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+.dot.active {
+    background-color: #ff9900;
 }
 
 /* ---------------------------------- */
