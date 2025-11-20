@@ -10,8 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSlide = 0;
     
     // 3. Налаштування рандомного фону
-    // Додайте тут свої шляхи до фонових зображень
-    const backgroundImages = ['photo1.jpg', 'photo2.jpg']; 
+    const backgroundImages = ['photo1.jpg', 'photo2.jpg']; // Додайте свої шляхи до фото
     let currentBackgroundImage = ''; 
     
     // 4. Змінні для свайпу
@@ -20,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let prevTranslate = 0;
     let isDragging = false;
     
-    const THRESHOLD = 50; // Мінімальний рух у пікселях для перемикання слайда (для мобільного)
+    const THRESHOLD_PERCENT = 10; // 10% руху для перемикання слайда
 
     // --- ФУНКЦІЇ ЛОГІКИ ---
 
@@ -65,10 +64,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ОБРОБНИКИ ПОДІЙ ---
 
     function getPositionX(e) {
+        // Перевіряємо, чи це подія дотику (touch) чи миші (mouse)
         return e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
     }
 
     function dragStart(e) {
+        // Ігноруємо правий клік миші
+        if (e.type.includes('mouse') && e.button !== 0) return; 
+        
         startX = getPositionX(e);
         isDragging = true;
         slideWrapper.style.transition = 'none'; 
@@ -77,10 +80,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function drag(e) {
         if (!isDragging) return;
         
+        // КЛЮЧОВЕ ВИПРАВЛЕННЯ: Блокуємо скрол на мобільному
+        if (e.type.includes('touch')) {
+            e.preventDefault(); 
+        }
+
         const currentX = getPositionX(e);
-        const deltaX = currentX - startX; // Рух у пікселях
+        const deltaX = currentX - startX; 
         
-        // Перетворюємо рух у пікселях у відсотки, враховуючи, що у нас 2 слайди
+        // Використовуємо ширину контейнера для обчислення відсотка
         const translationPercentage = (deltaX / swipeContainer.offsetWidth) * 100 * (100 / totalSlides);
         
         currentTranslate = prevTranslate + translationPercentage;
@@ -91,12 +99,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isDragging) return;
         isDragging = false;
         
-        const finalX = getPositionX(e.type.includes('mouse') ? e : e.changedTouches[0]);
-        const movedDistance = finalX - startX; // Загальна відстань руху в пікселях
+        // Обчислення відсотка, на який ми зрушили
+        const movedByPercent = currentTranslate - prevTranslate;
         
-        if (movedDistance < -THRESHOLD) { // Рух вліво (наступний слайд)
+        if (movedByPercent < -THRESHOLD_PERCENT) { // Рух вліво (наступний слайд)
             goToSlide(currentSlide + 1);
-        } else if (movedDistance > THRESHOLD) { // Рух вправо (попередній слайд)
+        } else if (movedByPercent > THRESHOLD_PERCENT) { // Рух вправо (попередній слайд)
             goToSlide(currentSlide - 1);
         } else {
             // Повертаємо на поточний слайд, якщо рух недостатній
@@ -106,17 +114,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- ПІДКЛЮЧЕННЯ ПОДІЙ ---
     
-    // Дотик (Touch) - Основний для мобільного
+    // Дотик (Touch)
     swipeContainer.addEventListener('touchstart', dragStart);
     swipeContainer.addEventListener('touchmove', drag);
     swipeContainer.addEventListener('touchend', dragEnd);
     
-    // Мишка (Mouse) - Для десктопу
+    // Мишка (Mouse)
     swipeContainer.addEventListener('mousedown', dragStart);
-    swipeContainer.addEventListener('mousemove', drag);
-    swipeContainer.addEventListener('mouseup', dragEnd);
+    // Ці події вішаємо на window, щоб відстежувати рух, навіть коли курсор вийшов за межі контейнера
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('mouseup', dragEnd);
     
     // Ініціалізація
-    setRandomBackground(); // Встановлюємо перший випадковий фон
+    setRandomBackground(); 
     goToSlide(0); 
 });
