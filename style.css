@@ -1,5 +1,5 @@
 /* ---------------------------------- */
-/* ГЛОБАЛЬНА ОПТИМІЗАЦІЯ ТА ФОН */
+/* ГЛОБАЛЬНА ОПТИМІЗАЦІЯ ДЛЯ МОБІЛЬНОГО */
 /* ---------------------------------- */
 html, body {
     height: 100%; 
@@ -12,7 +12,6 @@ body {
     margin: 0;
     padding: 0;
     color: #e0e0e0; 
-    /* ФІКСОВАНИЙ ТЕМНИЙ ФОН */
     background-color: #121212; 
     line-height: 1.7;
     min-height: 100vh;
@@ -20,6 +19,24 @@ body {
     justify-content: center;
     align-items: center;
     font-weight: 300;
+}
+
+/* ---------------------------------- */
+/* ФОНОВИЙ ЕЛЕМЕНТ (РАНДОМІЗАЦІЯ) */
+/* ---------------------------------- */
+#transition-photo {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; 
+    background-size: cover;
+    background-position: center;
+    filter: blur(5px) grayscale(50%); 
+    background-color: rgba(0, 0, 0, 0.5); 
+    background-blend-mode: overlay; 
+    transition: background-image 0.5s ease-in-out; 
 }
 
 /* ---------------------------------- */
@@ -82,7 +99,7 @@ body {
 /* ---------------------------------- */
 .dots-indicator {
     position: absolute;
-    top: 5px; 
+    top: -10px; 
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -243,5 +260,9 @@ body {
     
     .btn {
         width: 100%;
+    }
+    
+    .main-wrapper.slide {
+        max-height: none; 
     }
 }
