@@ -1,24 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Отримання елементів DOM
     const swipeContainer = document.querySelector('.swipe-container');
     const slideWrapper = document.querySelector('.slide-wrapper');
-    const slides = document.querySelectorAll('.slide');
     const dots = document.querySelectorAll('.dot');
     const transitionPhoto = document.getElementById('transition-photo'); 
     
-    const totalSlides = slides.length;
+    // 2. Налаштування слайдера
+    const totalSlides = 2; // Фіксована кількість слайдів
     let currentSlide = 0;
     
-    // ДОДАЙТЕ БІЛЬШЕ ФОТОГРАФІЙ У ЦЕЙ СПИСОК
+    // 3. Налаштування рандомного фону
+    // Додайте тут свої шляхи до фонових зображень
     const backgroundImages = ['photo1.jpg', 'photo2.jpg']; 
     let currentBackgroundImage = ''; 
     
-    // Змінні для свайпу
+    // 4. Змінні для свайпу
     let startX = 0;
     let currentTranslate = 0;
     let prevTranslate = 0;
     let isDragging = false;
     
-    // --- ЗМІНА ФОНУ (рандом) ---
+    const THRESHOLD = 50; // Мінімальний рух у пікселях для перемикання слайда (для мобільного)
+
+    // --- ФУНКЦІЇ ЛОГІКИ ---
+
     function setRandomBackground() {
         if (backgroundImages.length === 0) return;
         
@@ -32,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentBackgroundImage = randomImage;
     }
 
-    // Оновлення крапок-індикаторів
     function updateDots() {
         dots.forEach((dot, index) => {
             dot.classList.remove('active');
@@ -42,22 +46,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function setPositionByIndex() {
+    function setPositionByIndex(animate = true) {
+        // currentTranslate - це зміщення у відсотках (0% або -50%)
         currentTranslate = currentSlide * (-100 / totalSlides); 
+        
+        slideWrapper.style.transition = animate ? 'transform 0.4s ease-out' : 'none';
         slideWrapper.style.transform = `translateX(${currentTranslate}%)`;
+        prevTranslate = currentTranslate; // Оновлюємо prevTranslate
     }
 
     function goToSlide(index) {
         currentSlide = (index + totalSlides) % totalSlides; 
-        setPositionByIndex();
+        setPositionByIndex(true);
         updateDots();
-        
         setRandomBackground(); 
     }
     
-    // --- ОСНОВНІ ФУНКЦІЇ СВАЙПУ ---
+    // --- ОБРОБНИКИ ПОДІЙ ---
+
+    function getPositionX(e) {
+        return e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    }
+
     function dragStart(e) {
-        startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        startX = getPositionX(e);
         isDragging = true;
         slideWrapper.style.transition = 'none'; 
     }
@@ -65,45 +77,46 @@ document.addEventListener('DOMContentLoaded', () => {
     function drag(e) {
         if (!isDragging) return;
         
-        const currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-        const deltaX = currentX - startX;
+        const currentX = getPositionX(e);
+        const deltaX = currentX - startX; // Рух у пікселях
         
-        currentTranslate = prevTranslate + (deltaX / swipeContainer.offsetWidth * 100) * (100 / totalSlides);
+        // Перетворюємо рух у пікселях у відсотки, враховуючи, що у нас 2 слайди
+        const translationPercentage = (deltaX / swipeContainer.offsetWidth) * 100 * (100 / totalSlides);
+        
+        currentTranslate = prevTranslate + translationPercentage;
         slideWrapper.style.transform = `translateX(${currentTranslate}%)`;
     }
 
-    function dragEnd() {
+    function dragEnd(e) {
         if (!isDragging) return;
         isDragging = false;
-        slideWrapper.style.transition = 'transform 0.4s ease-out';
         
-        const movedByPercent = currentTranslate - prevTranslate;
+        const finalX = getPositionX(e.type.includes('mouse') ? e : e.changedTouches[0]);
+        const movedDistance = finalX - startX; // Загальна відстань руху в пікселях
         
-        if (movedByPercent < -10) { 
+        if (movedDistance < -THRESHOLD) { // Рух вліво (наступний слайд)
             goToSlide(currentSlide + 1);
-        } else if (movedByPercent > 10) { 
+        } else if (movedDistance > THRESHOLD) { // Рух вправо (попередній слайд)
             goToSlide(currentSlide - 1);
         } else {
+            // Повертаємо на поточний слайд, якщо рух недостатній
             goToSlide(currentSlide);
         }
-        
-        prevTranslate = currentTranslate;
     }
     
     // --- ПІДКЛЮЧЕННЯ ПОДІЙ ---
     
-    // Підтримка мишки
-    swipeContainer.addEventListener('mousedown', dragStart);
-    window.addEventListener('mouseup', dragEnd);
-    window.addEventListener('mousemove', drag);
-    
-    // Підтримка дотику
+    // Дотик (Touch) - Основний для мобільного
     swipeContainer.addEventListener('touchstart', dragStart);
-    window.addEventListener('touchend', dragEnd);
-    window.addEventListener('touchmove', drag);
+    swipeContainer.addEventListener('touchmove', drag);
+    swipeContainer.addEventListener('touchend', dragEnd);
+    
+    // Мишка (Mouse) - Для десктопу
+    swipeContainer.addEventListener('mousedown', dragStart);
+    swipeContainer.addEventListener('mousemove', drag);
+    swipeContainer.addEventListener('mouseup', dragEnd);
     
     // Ініціалізація
-    setRandomBackground(); 
+    setRandomBackground(); // Встановлюємо перший випадковий фон
     goToSlide(0); 
-    prevTranslate = currentTranslate;
 });
