@@ -45,7 +45,6 @@ body {
 .swipe-container {
     width: 100%;
     max-width: 650px;
-    /* Зменшуємо вертикальний відступ для мобільного, щоб було більше місця */
     margin: 20px auto; 
     overflow: hidden;
     position: relative;
@@ -73,13 +72,12 @@ body {
     
     padding: 40px 30px; 
     margin: 0; 
-    /* Обмежуємо висоту, щоб картка вміщалася на екрані телефону */
     max-height: 95vh; 
     overflow-y: auto; 
 }
 
 /* ---------------------------------- */
-/* ФОТО У ПРАВОМУ КУТІ (ОСТАННЄ ВИПРАВЛЕННЯ) */
+/* ФОТО У ПРАВОМУ КУТІ */
 /* ---------------------------------- */
 .profile-photo {
     width: 100px; 
@@ -89,7 +87,6 @@ body {
     border: 3px solid #333333;
     
     position: absolute; 
-    /* Фіксований відступ від верху, щоб не обрізало */
     top: 25px; 
     right: 25px; 
     z-index: 5;
@@ -102,7 +99,7 @@ body {
 /* ---------------------------------- */
 .dots-indicator {
     position: absolute;
-    top: -10px; /* Трохи піднімаємо над карткою */
+    top: -10px; 
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -126,7 +123,6 @@ body {
 /* ЗАГОЛОВКИ ТА ЕЛЕМЕНТИ */
 /* ---------------------------------- */
 .card-header {
-    /* Додаємо відступ, щоб текст не перекривався фотографією */
     padding-top: 50px; 
 }
 
@@ -170,10 +166,8 @@ body {
 
 .button-grid {
     display: grid;
-    /* На мобільному залишаємо один стовпець */
     grid-template-columns: 1fr; 
     gap: 15px;
-    /* КЛЮЧОВЕ ВИПРАВЛЕННЯ: Центруємо кнопки всередині action-buttons */
     justify-items: center; 
 }
 
@@ -190,7 +184,6 @@ body {
     min-width: 150px; 
     box-sizing: border-box; 
     text-align: center;
-    /* Вирівнювання по центру, якщо кнопка займає не всю ширину */
     width: 80%; 
     max-width: 350px;
 }
@@ -261,9 +254,8 @@ body {
 /* ---------------------------------- */
 @media (min-width: 600px) {
     .button-grid {
-        /* На десктопі повертаємо три колонки */
         grid-template-columns: repeat(3, 1fr); 
-        justify-items: stretch; /* Розтягуємо кнопки на всю ширину */
+        justify-items: stretch; 
     }
     
     .btn {
